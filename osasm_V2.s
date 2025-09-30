@@ -54,7 +54,7 @@ SysTick_Handler                ; 1) Saves R0-R3,R12,LR,PC,PSR
     LDR     R1, [R0]           ;    R1 = RunPt
     STR     SP, [R1]           ; 5) Save SP into TCB
 	PUSH	{LR, R0}
-	BL		Scheduler		   ; 6) Call Scheduler
+	BL		OS_Schedule		   ; 6) Call Scheduler
 	POP		{LR, R0}		   
     LDR		R1, [R0]
 	LDR     SP, [R1]           ; 7) new thread SP; SP = RunPt->sp;
