@@ -23,51 +23,7 @@
  http://users.ece.utexas.edu/~valvano/
  */
 
-// #include "TM4C123GH6PM.h"
-#include "tm4c123gh6pm_def.h"
-#include <stdint.h>
-
-/* #define NVIC_ST_CTRL_R          (*((volatile uint32_t *)0xE000E010))
-#define NVIC_ST_CTRL_CLK_SRC    0x00000004  // Clock Source
-#define NVIC_ST_CTRL_INTEN      0x00000002  // Interrupt enable
-#define NVIC_ST_CTRL_ENABLE     0x00000001  // Counter mode
-#define NVIC_ST_RELOAD_R        (*((volatile uint32_t *)0xE000E014))
-#define NVIC_ST_CURRENT_R       (*((volatile uint32_t *)0xE000E018))
-#define NVIC_INT_CTRL_R         (*((volatile uint32_t *)0xE000ED04))
-#define NVIC_INT_CTRL_PENDSTSET 0x04000000  // Set pending SysTick interrupt
-#define NVIC_SYS_PRI3_R         (*((volatile uint32_t *)0xE000ED20))  // Sys. Handlers 12 to 15 Priority
-*/
-
-// Function definitions in osasm.s
-void OS_DisableInterrupts();
-void OS_EnableInterrupts();
-int32_t StartCritical();
-void EndCritical(int32_t primask);
-void Clock_Init();
-void StartOS();
-
-// Maximum number of threads
-#define NUM_THREADS 3
-// Number of 32-bit words in stack
-#define STACK_SIZE 100
-
-struct TCB
-{
-  // Pointer to stack (valid for threads not running)
-  int32_t *sp;
-  // Linked-list pointer
-  struct TCB *next;
-  // If non-zero, this thread is blocked by the semaphore pointed to
-  uint32_t *blocked;
-};
-
-struct TCB tcbs[NUM_THREADS];
-struct TCB *RunPt;
-int32_t Stacks[NUM_THREADS][STACK_SIZE];
-
-uint32_t Mail;
-uint32_t Lost = 0;
-uint32_t Send = 0;
+#include "rtos.h"
 
 void OS_Suspend()
 {
@@ -119,14 +75,29 @@ void OS_Signal(uint32_t *s)
 
 void OS_Schedule()
 {
-  // Round robin - find the next non-blocked task
+  // Round robin
 
-  RunPt = RunPt->next;
+  if (NVIC_ST_CTRL_R &= 0x10000)
+  {
+    // A full timeslice has passed
 
-  while (RunPt->blocked)
+    struct TCB *Pt = RunPt->next;
+
+    while (Pt != RunPt)
+    {
+      if (Pt->sleep > 0)
+      {
+        Pt->sleep -= 1;
+      }
+
+      Pt = Pt->next;
+    }
+  }
+
+  do
   {
     RunPt = RunPt->next;
-  }
+  } while (RunPt->blocked || RunPt->sleep);
 }
 
 void SendMail(uint32_t data)
