@@ -23,7 +23,7 @@
 ; http://users.ece.utexas.edu/~valvano/
 ; */
 
-		IMPORT	Scheduler
+		IMPORT	OS_Schedule
 	AREA |.text|, CODE, READONLY, ALIGN=2
         THUMB
         REQUIRE8
