@@ -409,6 +409,11 @@
               <FileType>1</FileType>
               <FilePath>.\user.c</FilePath>
             </File>
+            <File>
+              <FileName>rtos.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\rtos.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
