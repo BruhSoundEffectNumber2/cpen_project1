@@ -36,12 +36,65 @@ uint32_t Mail;
 uint32_t Lost = 0;
 uint32_t Send = 0;
 
+uint32_t PutI;
+uint32_t GetI;
+uint32_t Fifo[FIFO_SIZE];
+uint32_t CurrentSize = 0;
+
+void OS_FIFO_Init(void)
+{
+  PutI = GetI = 0;
+}
+
+uint32_t OS_FIFO_Full(void)
+{
+  return CurrentSize == FIFO_SIZE;
+}
+
+uint32_t OS_FIFO_Empty(void)
+{
+  return CurrentSize == 0;
+}
+
+int32_t OS_FIFO_Put(uint32_t data)
+{
+  if (CurrentSize == FIFO_SIZE)
+  {
+    // FIFO is full
+    return -1;
+  }
+
+  Fifo[PutI] = data;
+  PutI = (PutI + 1) % FIFO_SIZE;
+  OS_Signal(&CurrentSize);
+
+  return 0;
+}
+
+uint32_t OS_FIFO_Get(void)
+{
+  uint32_t data;
+
+  OS_Wait(&CurrentSize);
+
+  data = Fifo[GetI];
+  GetI = (GetI + 1) & FIFO_SIZE;
+
+  return data;
+}
+
 void OS_Suspend()
 {
   // Reset counter for fairness
   // NVIC_ST_CURRENT_R = 0;
   // Forcibly trigger an interrupt
   NVIC_INT_CTRL_R |= 0x04000000;
+}
+
+void OS_Sleep(uint32_t length)
+{
+  RunPt->sleep = length;
+  OS_Suspend();
 }
 
 void OS_Wait(uint32_t *s)

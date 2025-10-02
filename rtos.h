@@ -18,6 +18,7 @@ void StartOS();
 #define NUM_THREADS 3
 // Number of 32-bit words in stack
 #define STACK_SIZE 100
+#define FIFO_SIZE 10
 
 // Thread Control Block
 struct TCB
@@ -32,18 +33,22 @@ struct TCB
     uint32_t sleep;
 };
 
+void OS_FIFO_Init(void);
+uint32_t OS_FIFO_Full(void);
+uint32_t OS_FIFO_Empty(void);
+int32_t OS_FIFO_Put(uint32_t data);
+uint32_t OS_FIFO_Get(void);
+
 void OS_Suspend();
-
+void OS_Sleep(uint32_t time);
+void OS_Wait(uint32_t *s);
+void OS_Signal(uint32_t *s);
 void OS_Init();
-
 void SetInitialStack(int i);
-
 int OS_AddThreads(void (*task0)(void),
                   void (*task1)(void),
                   void (*task2)(void));
-
 void OS_Launch(uint32_t theTimeSlice);
-
 void Clock_Init(void);
 
 #endif // RTOS_H
