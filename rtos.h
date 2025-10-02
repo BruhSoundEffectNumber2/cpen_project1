@@ -43,4 +43,20 @@ uint32_t Mail;
 uint32_t Lost = 0;
 uint32_t Send = 0;
 
+void OS_Suspend();
+
+
+
+void OS_Init();
+
+void SetInitialStack(int i);
+
+int OS_AddThreads(void (*task0)(void),
+                  void (*task1)(void),
+                  void (*task2)(void));
+
+void OS_Launch(uint32_t theTimeSlice);
+
+void Clock_Init(void);
+
 #endif // RTOS_H
