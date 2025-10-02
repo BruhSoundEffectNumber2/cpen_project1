@@ -88,7 +88,7 @@ void OS_Schedule()
 {
   // Round robin
 
-  if (NVIC_ST_CTRL_R &= 0x10000)
+  if (NVIC_ST_CTRL_R & 0x10000)
   {
     // A full timeslice has passed
 
