@@ -25,6 +25,17 @@
 
 #include "rtos.h"
 
+// All TCBs
+struct TCB tcbs[NUM_THREADS];
+// Pointer to actively running thread
+struct TCB *RunPt;
+// Stacks for all threads
+int32_t Stacks[NUM_THREADS][STACK_SIZE];
+
+uint32_t Mail;
+uint32_t Lost = 0;
+uint32_t Send = 0;
+
 void OS_Suspend()
 {
   // Reset counter for fairness
