@@ -5,14 +5,14 @@
 
 enum COLORS
 {
-	NONE = 0b000,	 // ___
-	GREEN = 0b100,	 // G__
-	BLUE = 0b010,	 // _B_
-	RED = 0b001,	 // __R
-	YELLOW = 0b101,	 // G_R
-	CYAN = 0b110,	 // GB_
-	MAGENTA = 0b011, // _BR
-	WHITE = 0b111	 // BGR
+	NONE,	 // ___
+	RED,	 // __R
+	BLUE,	 // _B_
+	GREEN,	 // G__
+	MAGENTA, // _BR
+	YELLOW,	 // G_R
+	CYAN,	 // GB_
+	WHITE	 // BGR
 };
 
 char *Color_To_Str(uint32_t color)
