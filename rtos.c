@@ -33,13 +33,13 @@ struct TCB *RunPt;
 int32_t Stacks[NUM_THREADS][STACK_SIZE];
 
 uint32_t Mail;
-uint32_t Lost = 0;
-uint32_t Send = 0;
+int32_t Lost = 0;
+int32_t Send = 0;
 
 uint32_t PutI;
 uint32_t GetI;
 uint32_t Fifo[FIFO_SIZE];
-uint32_t CurrentSize = 0;
+int32_t CurrentSize = 0;
 
 void OS_FIFO_Init(void)
 {
@@ -78,12 +78,12 @@ uint32_t OS_FIFO_Get(void)
   OS_Wait(&CurrentSize);
 
   data = Fifo[GetI];
-  GetI = (GetI + 1) & FIFO_SIZE;
+  GetI = (GetI + 1) % FIFO_SIZE;
 
   return data;
 }
 
-void OS_Suspend()
+void OS_Suspend(void)
 {
   // Reset counter for fairness
   // NVIC_ST_CURRENT_R = 0;
@@ -97,7 +97,7 @@ void OS_Sleep(uint32_t length)
   OS_Suspend();
 }
 
-void OS_Wait(uint32_t *s)
+void OS_Wait(int32_t *s)
 {
   OS_DisableInterrupts();
 
@@ -113,7 +113,7 @@ void OS_Wait(uint32_t *s)
   OS_EnableInterrupts();
 }
 
-void OS_Signal(uint32_t *s)
+void OS_Signal(int32_t *s)
 {
   struct TCB *pt;
 
@@ -137,7 +137,7 @@ void OS_Signal(uint32_t *s)
   OS_EnableInterrupts();
 }
 
-void OS_Schedule()
+void OS_Schedule(void)
 {
   // Round robin
 
@@ -178,7 +178,7 @@ void SendMail(uint32_t data)
   }
 }
 
-uint32_t RecvMail()
+uint32_t RecvMail(void)
 {
   OS_Wait(&Send);
 

@@ -7,12 +7,12 @@
 
 // Functions defined in osasm_V2.s
 
-void OS_DisableInterrupts();
-void OS_EnableInterrupts();
-int32_t StartCritical();
+void OS_DisableInterrupts(void);
+void OS_EnableInterrupts(void);
+int32_t StartCritical(void);
 void EndCritical(int32_t primask);
-void Clock_Init();
-void StartOS();
+void Clock_Init(void);
+void StartOS(void);
 
 // Maximum number of threads
 #define NUM_THREADS 3
@@ -28,7 +28,7 @@ struct TCB
     // Linked-list pointer
     struct TCB *next;
     // If non-zero, this thread is blocked by the semaphore pointed to
-    uint32_t *blocked;
+    int32_t *blocked;
     // Number of timeslices until the thread is done sleeping (0 indicates ready)
     uint32_t sleep;
 };
@@ -39,11 +39,11 @@ uint32_t OS_FIFO_Empty(void);
 int32_t OS_FIFO_Put(uint32_t data);
 uint32_t OS_FIFO_Get(void);
 
-void OS_Suspend();
+void OS_Suspend(void);
 void OS_Sleep(uint32_t time);
-void OS_Wait(uint32_t *s);
-void OS_Signal(uint32_t *s);
-void OS_Init();
+void OS_Wait(int32_t *s);
+void OS_Signal(int32_t *s);
+void OS_Init(void);
 void SetInitialStack(int i);
 int OS_AddThreads(void (*task0)(void),
                   void (*task1)(void),

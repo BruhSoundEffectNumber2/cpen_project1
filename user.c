@@ -3,19 +3,19 @@
 
 #define TIMESLICE 32000 // 2ms
 
-enum COLORS
+typedef enum COLORS
 {
 	NONE,	 // ___
 	RED,	 // __R
 	BLUE,	 // _B_
-	GREEN,	 // G__
 	MAGENTA, // _BR
+	GREEN,	 // G__
 	YELLOW,	 // G_R
 	CYAN,	 // GB_
 	WHITE	 // BGR
-};
+} COLORS;
 
-char *Color_To_Str(uint32_t color)
+char *Color_To_Str(COLORS color)
 {
 	switch (color)
 	{
@@ -42,6 +42,8 @@ char *Color_To_Str(uint32_t color)
 
 void LCD_Display()
 {
+	LCD_Str("Hello World");
+
 	for (;;)
 	{
 	}
@@ -49,19 +51,22 @@ void LCD_Display()
 
 void LED_Change()
 {
-	// See if the queue is empty so we can clear the LED first
-	if (OS_FIFO_Empty())
+	for (;;)
 	{
-		GPIO_PORTF_DATA_R = NONE << 1;
+		// See if the queue is empty so we can clear the LED first
+		if (OS_FIFO_Empty())
+		{
+			GPIO_PORTF_DATA_R = NONE << 1;
+		}
+
+		// Get the next color. If the queue is empty, then it will simply block until there is a new color
+		uint32_t next = OS_FIFO_Get();
+
+		GPIO_PORTF_DATA_R = next << 1;
+
+		// Sleep for 15 seconds (7500 time slices @ 2ms/slice)
+		OS_Sleep(7500);
 	}
-
-	// Get the next color. If the queue is empty, then it will simply block until there is a new color
-	uint32_t next = OS_FIFO_Get();
-
-	GPIO_PORTF_DATA_R = next << 1;
-
-	// Sleep for 15 seconds (7500 time slices @ 2ms/slice)
-	OS_Sleep(7500);
 }
 
 void Color_Add()
@@ -74,11 +79,12 @@ void Color_Add()
 int main(void)
 {
 	OS_Init(); // initialize, disable interrupts, 16 MHz
+	OS_FIFO_Init();
 
 	// Enable all GPIO Ports and wait for them to stabilize
 	SYSCTL_RCGCGPIO_R = 0x3F;
 
-	while (SYSCTL_RCGCGPIO_R & 0x3F == 0)
+	while ((SYSCTL_RCGCGPIO_R & 0x3F) == 0)
 	{
 	}
 
