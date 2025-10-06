@@ -16,8 +16,11 @@ typedef enum COLORS
 	GREEN,	 // G__
 	YELLOW,	 // G_R
 	CYAN,	 // GB_
-	WHITE	 // BGR
+	WHITE,	 // BGR
+	MAX
 } COLORS;
+
+uint32_t CURRENT_COLOR = NONE;
 
 char *Color_To_Str(COLORS color)
 {
@@ -68,19 +71,18 @@ void LCD_Display()
 		Set_Position(0x40);
 
 		// Bottom: input a color if nothing, current and next otherwise
-		if (OS_FIFO_Empty())
+		if (OS_FIFO_Empty() && (CURRENT_COLOR == MAX))
 		{
 			Display_Msg("Input a Color!");
 		}
 		else
 		{
 			// Current color
-			uint32_t current = (GPIO_PORTF_DATA_R >> 1) & 7;
 			uint32_t next;
 			int32_t has_next = OS_FIFO_Next(&next);
 
 			Display_Msg("C:");
-			Display_Msg(Color_To_Str(current));
+			Display_Msg(Color_To_Str(CURRENT_COLOR));
 			Display_Msg(" N:");
 
 			if (has_next == 0)
@@ -105,6 +107,7 @@ void LED_Change()
 		if (OS_FIFO_Empty())
 		{
 			OS_FIFO_Put(MAGENTA);
+			CURRENT_COLOR = MAX;
 			GPIO_PORTF_DATA_R = NONE << 1;
 			OS_Sleep(1500);
 		}
@@ -112,8 +115,9 @@ void LED_Change()
 		{
 			// Get the next color. If the queue is empty, then it will simply block until there is a new color
 			uint32_t next = OS_FIFO_Get();
+			CURRENT_COLOR = next;
 
-			GPIO_PORTF_DATA_R = next << 1;
+			GPIO_PORTF_DATA_R = CURRENT_COLOR << 1;
 
 			// Sleep for 15 seconds (7500 time slices @ 2ms/slice)
 			OS_Sleep(1500);
