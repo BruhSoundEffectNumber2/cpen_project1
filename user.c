@@ -1,6 +1,7 @@
 #include "rtos.h"
 
-#define TIMESLICE 32000 // 2ms
+#define TIMESLICE 32000	 // 2ms
+#define COLOR_CYCLE 1500 // 15s (7500 time slices @ 2ms/slice)
 
 void Init_LCD_Ports(void);
 void Init_LCD(void);
@@ -16,34 +17,33 @@ typedef enum COLORS
 	GREEN,	 // G__
 	YELLOW,	 // G_R
 	CYAN,	 // GB_
-	WHITE,	 // BGR
-	MAX
+	WHITE	 // BGR
 } COLORS;
 
-uint32_t CURRENT_COLOR = NONE;
+uint32_t CURRENTLY_SHOWING_COLOR = 0;
 
 char *Color_To_Str(COLORS color)
 {
 	switch (color)
 	{
 	case NONE:
-		return "   ";
+		return "NONE";
 	case GREEN:
-		return "GRN";
+		return "GREN";
 	case BLUE:
-		return "BLU";
+		return "BLUE";
 	case RED:
-		return "RED";
+		return "RED ";
 	case YELLOW:
-		return "YLW";
+		return "YELW";
 	case CYAN:
-		return "CYA";
+		return "CYAN";
 	case MAGENTA:
-		return "MGA";
+		return "MGTA";
 	case WHITE:
-		return "WHT";
+		return "WHIT";
 	default:
-		return "ERR";
+		return "ERR ";
 	}
 }
 
@@ -65,24 +65,25 @@ void LCD_Display()
 		}
 		else
 		{
-			Display_Msg("Switches: ???");
+			Display_Msg("Switches: ????");
 		}
 
 		Set_Position(0x40);
 
 		// Bottom: input a color if nothing, current and next otherwise
-		if (OS_FIFO_Empty() && (CURRENT_COLOR == MAX))
+		if (OS_FIFO_Empty() && !CURRENTLY_SHOWING_COLOR)
 		{
 			Display_Msg("Input a Color!");
 		}
 		else
 		{
-			// Current color
+			// Find the current color based on the GPIO ports
+			uint32_t current = (GPIO_PORTF_DATA_R >> 1) & 0x7;
 			uint32_t next;
 			int32_t has_next = OS_FIFO_Next(&next);
 
 			Display_Msg("C:");
-			Display_Msg(Color_To_Str(CURRENT_COLOR));
+			Display_Msg(Color_To_Str(current));
 			Display_Msg(" N:");
 
 			if (has_next == 0)
@@ -91,11 +92,11 @@ void LCD_Display()
 			}
 			else
 			{
-				Display_Msg("???");
+				Display_Msg("????");
 			}
 		}
 
-		OS_Sleep(50);
+		OS_Sleep(125); // 4hz
 	}
 }
 
@@ -106,21 +107,20 @@ void LED_Change()
 		// If the queue is empty, clear the LED and wait for the next color cycle
 		if (OS_FIFO_Empty())
 		{
-			OS_FIFO_Put(MAGENTA);
-			CURRENT_COLOR = MAX;
+			OS_FIFO_Put(MAGENTA); // TODO: Remove this line
+			CURRENTLY_SHOWING_COLOR = 0;
 			GPIO_PORTF_DATA_R = NONE << 1;
-			OS_Sleep(1500);
+			OS_Sleep(COLOR_CYCLE);
 		}
 		else
 		{
 			// Get the next color. If the queue is empty, then it will simply block until there is a new color
 			uint32_t next = OS_FIFO_Get();
-			CURRENT_COLOR = next;
+			CURRENTLY_SHOWING_COLOR = 1;
 
-			GPIO_PORTF_DATA_R = CURRENT_COLOR << 1;
+			GPIO_PORTF_DATA_R = next << 1;
 
-			// Sleep for 15 seconds (7500 time slices @ 2ms/slice)
-			OS_Sleep(1500);
+			OS_Sleep(COLOR_CYCLE);
 		}
 	}
 }
@@ -151,8 +151,7 @@ int main(void)
 	GPIO_PORTF_DIR_R |= 0xE;
 	GPIO_PORTF_DEN_R |= 0xE;
 
-	// LCD_init();
-
+	// TODO: Remove these
 	OS_FIFO_Put(GREEN);
 	OS_FIFO_Put(BLUE);
 	OS_FIFO_Put(RED);
