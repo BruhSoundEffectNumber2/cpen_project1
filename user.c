@@ -49,44 +49,34 @@ char *Color_To_Str(COLORS color)
 
 void LCD_Display()
 {
-	int32_t last_fifo_empty = 0;
-	int32_t last_fifo_full = 0;
-
 	for (;;)
 	{
-		// // Clear LCD
-		// Set_Position(0x00);
-		// Display_Msg("                ");
-		// Set_Position(0x40);
-		// Display_Msg("                ");
-		// Set_Position(0x00);
-
-		// Top: buffer full or current switches pressed
+		// Clear LCD
+		Set_Position(0x00);
+		Display_Msg("                ");
+		Set_Position(0x40);
+		Display_Msg("                ");
 		Set_Position(0x00);
 
-		if (OS_FIFO_Full() && !last_fifo_full)
+		// Top: buffer full or current switches pressed
+		if (OS_FIFO_Full())
 		{
 			Display_Msg("  Buffer Full!  ");
-			last_fifo_full = 1;
 		}
-		else if (!OS_FIFO_Full() && last_fifo_full)
+		else
 		{
-			Display_Msg("Switches: ????  ");
-			last_fifo_full = 0;
+			Display_Msg("Switches: ????");
 		}
 
 		Set_Position(0x40);
 
 		// Bottom: input a color if nothing, current and next otherwise
-		if (OS_FIFO_Empty() && !CURRENTLY_SHOWING_COLOR && !last_fifo_empty)
+		if (OS_FIFO_Empty() && !CURRENTLY_SHOWING_COLOR)
 		{
 			Display_Msg("Input a Color!");
-			last_fifo_empty = 1;
 		}
 		else
 		{
-			last_fifo_empty = 0;
-
 			// Find the current color based on the GPIO ports
 			uint32_t current = (GPIO_PORTF_DATA_R >> 1) & 0x7;
 			uint32_t next;
@@ -102,11 +92,11 @@ void LCD_Display()
 			}
 			else
 			{
-				Display_Msg("???");
+				Display_Msg("????");
 			}
 		}
 
-		OS_Sleep(100);
+		OS_Sleep(125); // 4hz
 	}
 }
 
@@ -117,6 +107,7 @@ void LED_Change()
 		// If the queue is empty, clear the LED and wait for the next color cycle
 		if (OS_FIFO_Empty())
 		{
+			OS_FIFO_Put(MAGENTA); // TODO: Remove this line
 			CURRENTLY_SHOWING_COLOR = 0;
 			GPIO_PORTF_DATA_R = NONE << 1;
 			OS_Sleep(COLOR_CYCLE);
