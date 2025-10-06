@@ -1,7 +1,11 @@
 #include "rtos.h"
-#include "LCD.h"
 
 #define TIMESLICE 32000 // 2ms
+
+void Init_LCD_Ports(void);
+void Init_LCD(void);
+void Set_Position(uint32_t POS);
+void Display_Msg(char *Str);
 
 typedef enum COLORS
 {
@@ -42,10 +46,54 @@ char *Color_To_Str(COLORS color)
 
 void LCD_Display()
 {
-	LCD_Str("Hello World");
-
 	for (;;)
 	{
+		// Clear LCD
+		Set_Position(0x00);
+		Display_Msg("                ");
+		Set_Position(0x40);
+		Display_Msg("                ");
+		Set_Position(0x00);
+
+		// Top: buffer full or current switches pressed
+		if (OS_FIFO_Full())
+		{
+			Display_Msg("  Buffer Full!  ");
+		}
+		else
+		{
+			Display_Msg("Switches: ???");
+		}
+
+		Set_Position(0x40);
+
+		// Bottom: input a color if nothing, current and next otherwise
+		if (OS_FIFO_Empty())
+		{
+			Display_Msg("Input a Color!");
+		}
+		else
+		{
+			// Current color
+			uint32_t current = (GPIO_PORTF_DATA_R >> 1) & 7;
+			uint32_t next;
+			int32_t has_next = OS_FIFO_Next(&next);
+
+			Display_Msg("C:");
+			Display_Msg(Color_To_Str(current));
+			Display_Msg(" N:");
+
+			if (has_next == 0)
+			{
+				Display_Msg(Color_To_Str(next));
+			}
+			else
+			{
+				Display_Msg("???");
+			}
+		}
+
+		OS_Sleep(50);
 	}
 }
 
@@ -53,19 +101,23 @@ void LED_Change()
 {
 	for (;;)
 	{
-		// See if the queue is empty so we can clear the LED first
+		// If the queue is empty, clear the LED and wait for the next color cycle
 		if (OS_FIFO_Empty())
 		{
+			OS_FIFO_Put(MAGENTA);
 			GPIO_PORTF_DATA_R = NONE << 1;
+			OS_Sleep(1500);
 		}
+		else
+		{
+			// Get the next color. If the queue is empty, then it will simply block until there is a new color
+			uint32_t next = OS_FIFO_Get();
 
-		// Get the next color. If the queue is empty, then it will simply block until there is a new color
-		uint32_t next = OS_FIFO_Get();
+			GPIO_PORTF_DATA_R = next << 1;
 
-		GPIO_PORTF_DATA_R = next << 1;
-
-		// Sleep for 15 seconds (7500 time slices @ 2ms/slice)
-		OS_Sleep(7500);
+			// Sleep for 15 seconds (7500 time slices @ 2ms/slice)
+			OS_Sleep(1500);
+		}
 	}
 }
 
@@ -88,11 +140,18 @@ int main(void)
 	{
 	}
 
+	Init_LCD_Ports();
+	Init_LCD();
+
 	// Enable GBR LED (Port F 1-3)
 	GPIO_PORTF_DIR_R |= 0xE;
 	GPIO_PORTF_DEN_R |= 0xE;
 
-	LCD_init();
+	// LCD_init();
+
+	OS_FIFO_Put(GREEN);
+	OS_FIFO_Put(BLUE);
+	OS_FIFO_Put(RED);
 
 	OS_AddThreads(&LCD_Display, &LED_Change, &Color_Add);
 	OS_Launch(TIMESLICE); // doesn't return, interrupts enabled in here

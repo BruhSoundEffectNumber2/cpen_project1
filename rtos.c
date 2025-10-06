@@ -71,6 +71,19 @@ int32_t OS_FIFO_Put(uint32_t data)
   return 0;
 }
 
+int32_t OS_FIFO_Next(uint32_t *data)
+{
+  if (CurrentSize == 0)
+  {
+    // FIFO is empty
+    return -1;
+  }
+
+  *data = Fifo[GetI];
+
+  return 0;
+}
+
 uint32_t OS_FIFO_Get(void)
 {
   uint32_t data;

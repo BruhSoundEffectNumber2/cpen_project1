@@ -37,6 +37,7 @@ void OS_FIFO_Init(void);
 uint32_t OS_FIFO_Full(void);
 uint32_t OS_FIFO_Empty(void);
 int32_t OS_FIFO_Put(uint32_t data);
+int32_t OS_FIFO_Next(uint32_t *data);
 uint32_t OS_FIFO_Get(void);
 
 void OS_Suspend(void);
