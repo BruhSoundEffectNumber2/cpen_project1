@@ -138,22 +138,33 @@ void LED_Change()
 
 void Color_Add()
 {
+	uint32_t last_sw5 = 1; 
 	for (;;)
 	{
-		uint32_t input = GPIO_PORTF_DATA_R & 0x11; // Read SW1 and SW2
-		if (input == 0x01) // SW1 Press
+		uint32_t input = GPIO_PORTD_DATA_R & 0x11; // Read SW1 and SW2
+		uint32_t sw5 = input & 0x01; // PD0
+
+		if (last_sw5 == 1 && sw5 == 0) // SW5 Falling Edge
 		{
-			OS_FIFO_Put(RED);
+			if ((input & 0x02) == 0) // SW1 Press
+			{
+				OS_FIFO_Put(RED);
+			}
+			else if ((input & 0x04) == 0) // SW2 Press
+			{
+				OS_FIFO_Put(BLUE);
+			}
+			else if ((input & 0x08) == 0) // Both Press
+			{
+				OS_FIFO_Put(GREEN);
+			}
+			if (color != NONE)
+			{
+				OS_FIFO_Put(color);
+			}
 		}
-		else if (input == 0x10) // SW2 Press
-		{
-			OS_FIFO_Put(GREEN);
-		}
-		else if (input == 0x11) // Both Press
-		{
-			OS_FIFO_Put(BLUE);
-		}
-		OS_Sleep(100); // debounce delay
+
+		last_sw5 = sw5;
 	}
 }
 
