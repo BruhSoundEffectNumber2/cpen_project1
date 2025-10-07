@@ -146,15 +146,15 @@ void Color_Add()
 
 		if (last_sw5 == 1 && sw5 == 0) // SW5 Falling Edge
 		{
-			if ((input & 0x02) == 0) // SW1 Press
+			if ((input & 0x02) == 0) color |= 0x1;// SW1 Press
 			{
 				OS_FIFO_Put(RED);
 			}
-			else if ((input & 0x04) == 0) // SW2 Press
+			else if ((input & 0x04) == 0) color |= 0x2; // SW2 Press
 			{
 				OS_FIFO_Put(BLUE);
 			}
-			else if ((input & 0x08) == 0) // Both Press
+			else if ((input & 0x08) == 0) color |= 0x4; // Both Press
 			{
 				OS_FIFO_Put(GREEN);
 			}
@@ -186,6 +186,11 @@ int main(void)
 	// Enable GBR LED (Port F 1-3)
 	GPIO_PORTF_DIR_R |= 0xE;
 	GPIO_PORTF_DEN_R |= 0xE;
+
+	// Initialize Port D switches (PD0-PD3) as inputs
+	GPIO_PORTD_DIR_R &= ~0x0F;  // PD3-PD0 as inputs
+	GPIO_PORTD_DEN_R |= 0x0F;   // Digital enable
+	GPIO_PORTD_PUR_R |= 0x0F;   // Pull-up resistors (active-low switches)
 
 	// TODO: Remove these
 	OS_FIFO_Put(GREEN);
