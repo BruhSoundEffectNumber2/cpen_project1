@@ -65,8 +65,19 @@ void LCD_Display()
 		}
 		else
 		{
-			Display_Msg("Switches: ????");
-		}
+			uint32_t switches = GPIO_PORTF_DATA_R & 0x11;  // Read SW1 and SW2
+    		Display_Msg("Switches: ");
+    
+    		// SW1 (PF4) and SW2 (PF0) are active-low
+    		if (switches == 0x10)      // SW2 pressed
+   			    Display_Msg("SW2 ");
+    		else if (switches == 0x01) // SW1 pressed
+        		Display_Msg("SW1 ");
+    		else if (switches == 0x00) // Both pressed
+        		Display_Msg("BOTH");
+    		else                       // Neither pressed
+        		Display_Msg("NONE");
+}
 
 		Set_Position(0x40);
 
@@ -130,15 +141,15 @@ void Color_Add()
 	for (;;)
 	{
 		uint32_t input = GPIO_PORTF_DATA_R & 0x11; // Read SW1 and SW2
-		if (input == 0x01)
+		if (input == 0x01) // SW1 Press
 		{
 			OS_FIFO_Put(RED);
 		}
-		else if (input == 0x10)
+		else if (input == 0x10) // SW2 Press
 		{
 			OS_FIFO_Put(GREEN);
 		}
-		else if (input == 0x11)
+		else if (input == 0x11) // Both Press
 		{
 			OS_FIFO_Put(BLUE);
 		}
