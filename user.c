@@ -129,6 +129,20 @@ void Color_Add()
 {
 	for (;;)
 	{
+		uint32_t input = GPIO_PORTF_DATA_R & 0x11; // Read SW1 and SW2
+		if (input == 0x01)
+		{
+			OS_FIFO_Put(RED);
+		}
+		else if (input == 0x10)
+		{
+			OS_FIFO_Put(GREEN);
+		}
+		else if (input == 0x11)
+		{
+			OS_FIFO_Put(BLUE);
+		}
+		OS_Sleep(100); // debounce delay
 	}
 }
 
