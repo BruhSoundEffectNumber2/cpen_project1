@@ -143,16 +143,16 @@ void Color_Add()
 	for (;;)
 	{
 		uint32_t input = GPIO_PORTD_DATA_R & 0xE;
-		uint32_t sw5 = input & 0x01; // PD0
+		uint32_t sw5 = GPIO_PORTD_DATA_R & 0x01; // PD0
 
 		if (last_sw5 != sw5)
 		{
-			delayMs(20);
+			delayMs(10);
 
 			sw5 = GPIO_PORTD_DATA_R & 0x1;
 		}
 
-		if (sw5)
+		if (sw5 && last_sw5 != sw5)
 		{
 			OS_FIFO_Put((GPIO_PORTD_DATA_R & 0xE) >> 1);
 		}
