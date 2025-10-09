@@ -1,4 +1,5 @@
 #include "rtos.h"
+#include "delay.h"
 
 #define TIMESLICE 32000	 // 2ms
 #define COLOR_CYCLE 1500 // 15s (7500 time slices @ 2ms/slice)
@@ -65,19 +66,10 @@ void LCD_Display()
 		}
 		else
 		{
-			uint32_t switches = GPIO_PORTF_DATA_R & 0x11;  // Read SW1 and SW2
-    		Display_Msg("Switches: ");
-    
-    		// SW1 (PF4) and SW2 (PF0) are active-low
-    		if (switches == 0x10)      // SW2 pressed
-   			    Display_Msg("SW2 ");
-    		else if (switches == 0x01) // SW1 pressed
-        		Display_Msg("SW1 ");
-    		else if (switches == 0x00) // Both pressed
-        		Display_Msg("BOTH");
-    		else                       // Neither pressed
-        		Display_Msg("NONE");
-}
+			uint32_t switches = GPIO_PORTD_DATA_R & 0xE;
+			Display_Msg("Switches: ");
+			Display_Msg(Color_To_Str(switches >> 1));
+		}
 
 		Set_Position(0x40);
 
@@ -118,7 +110,6 @@ void LED_Change()
 		// If the queue is empty, clear the LED and wait for the next color cycle
 		if (OS_FIFO_Empty())
 		{
-			OS_FIFO_Put(MAGENTA); // TODO: Remove this line
 			CURRENTLY_SHOWING_COLOR = 0;
 			GPIO_PORTF_DATA_R = NONE << 1;
 			OS_Sleep(COLOR_CYCLE);
@@ -138,30 +129,22 @@ void LED_Change()
 
 void Color_Add()
 {
-	uint32_t last_sw5 = 1; 
+	uint32_t last_sw5 = 0;
 	for (;;)
 	{
-		uint32_t input = GPIO_PORTD_DATA_R & 0x11; // Read SW1 and SW2
+		uint32_t input = GPIO_PORTD_DATA_R & 0xE;
 		uint32_t sw5 = input & 0x01; // PD0
 
-		if (last_sw5 == 1 && sw5 == 0) // SW5 Falling Edge
+		if (last_sw5 != sw5)
 		{
-			if ((input & 0x02) == 0) color |= 0x1;// SW1 Press
-			{
-				OS_FIFO_Put(RED);
-			}
-			else if ((input & 0x04) == 0) color |= 0x2; // SW2 Press
-			{
-				OS_FIFO_Put(BLUE);
-			}
-			else if ((input & 0x08) == 0) color |= 0x4; // Both Press
-			{
-				OS_FIFO_Put(GREEN);
-			}
-			if (color != NONE)
-			{
-				OS_FIFO_Put(color);
-			}
+			delayMs(20);
+
+			sw5 = GPIO_PORTD_DATA_R & 0x1;
+		}
+
+		if (sw5)
+		{
+			OS_FIFO_Put((GPIO_PORTD_DATA_R & 0xE) >> 1);
 		}
 
 		last_sw5 = sw5;
@@ -188,14 +171,8 @@ int main(void)
 	GPIO_PORTF_DEN_R |= 0xE;
 
 	// Initialize Port D switches (PD0-PD3) as inputs
-	GPIO_PORTD_DIR_R &= ~0x0F;  // PD3-PD0 as inputs
-	GPIO_PORTD_DEN_R |= 0x0F;   // Digital enable
-	GPIO_PORTD_PUR_R |= 0x0F;   // Pull-up resistors (active-low switches)
-
-	// TODO: Remove these
-	OS_FIFO_Put(GREEN);
-	OS_FIFO_Put(BLUE);
-	OS_FIFO_Put(RED);
+	GPIO_PORTD_DIR_R &= ~0x0F; // PD3-PD0 as inputs
+	GPIO_PORTD_DEN_R |= 0x0F;  // Digital enable
 
 	OS_AddThreads(&LCD_Display, &LED_Change, &Color_Add);
 	OS_Launch(TIMESLICE); // doesn't return, interrupts enabled in here
