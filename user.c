@@ -1,5 +1,6 @@
 #include "rtos.h"
 #include "delay.h"
+#include <cstdio>
 
 #define TIMESLICE 32000	 // 2ms
 #define COLOR_CYCLE 1500 // 15s (7500 time slices @ 2ms/slice)
@@ -50,6 +51,8 @@ char *Color_To_Str(COLORS color)
 
 void LCD_Display()
 {
+	char time_left_str[3];
+
 	for (;;)
 	{
 		// Clear LCD
@@ -76,7 +79,7 @@ void LCD_Display()
 		// Bottom: input a color if nothing, current and next otherwise
 		if (OS_FIFO_Empty() && !CURRENTLY_SHOWING_COLOR)
 		{
-			Display_Msg("Input a Color!");
+			Display_Msg("Input a Color");
 		}
 		else
 		{
@@ -93,11 +96,20 @@ void LCD_Display()
 			{
 				Display_Msg(Color_To_Str(next));
 			}
-			else
+			else12
 			{
 				Display_Msg("????");
 			}
+
+			Display_Msg(" ");
 		}
+
+		// Time left in cycle
+		uint32_t time_left = OS_Sleep_Left(1);
+		// Divide by 500 to convert from 2ms time slices to seconds
+		// Add 1 to avoid displaying 00 when there is still time left
+		snprintf(time_left_str, "%02d", time_left / 500 + 1);
+		Display_Msg(time_left_str);
 
 		OS_Sleep(125); // 4hz
 	}

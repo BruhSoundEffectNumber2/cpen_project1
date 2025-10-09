@@ -110,6 +110,11 @@ void OS_Sleep(uint32_t length)
   OS_Suspend();
 }
 
+uint32_t OS_Sleep_Left(uint32_t taskId)
+{
+  return tcbs[taskId].sleep;
+}
+
 void OS_Wait(int32_t *s)
 {
   OS_DisableInterrupts();

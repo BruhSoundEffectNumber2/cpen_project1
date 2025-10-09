@@ -42,6 +42,7 @@ uint32_t OS_FIFO_Get(void);
 
 void OS_Suspend(void);
 void OS_Sleep(uint32_t time);
+uint32_t OS_Sleep_Left(uint32_t taskId);
 void OS_Wait(int32_t *s);
 void OS_Signal(int32_t *s);
 void OS_Init(void);
