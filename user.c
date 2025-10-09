@@ -3,7 +3,7 @@
 #include <cstdio>
 
 #define TIMESLICE 32000	 // 2ms
-#define COLOR_CYCLE 1500 // 15s (7500 time slices @ 2ms/slice)
+#define COLOR_CYCLE 7500 // 15s (7500 time slices @ 2ms/slice)
 
 void Init_LCD_Ports(void);
 void Init_LCD(void);
@@ -100,15 +100,13 @@ void LCD_Display()
 			{
 				Display_Msg("????");
 			}
-
-			Display_Msg(" ");
 		}
 
 		// Time left in cycle
 		uint32_t time_left = OS_Sleep_Left(1);
 		// Divide by 500 to convert from 2ms time slices to seconds
 		// Add 1 to avoid displaying 00 when there is still time left
-		sprintf(time_left_str, "%02d", time_left / 500 + 1);
+		sprintf(time_left_str, " %02d", time_left / 500 + 1);
 		Display_Msg(time_left_str);
 
 		OS_Sleep(125); // 4hz
